@@ -270,8 +270,8 @@ A forma de aplicar IA é livre. Algumas ideias possíveis:
 
 ## ✅ Checklist rápido
 
-- [ ] Python coleta dados de clima (Open-Meteo ou OpenWeather)
-- [ ] Python envia dados para a fila
+- [x] Python coleta dados de clima (Open-Meteo ou OpenWeather)
+- [x] Python envia dados para a fila
 - [ ] Worker Go consome a fila e envia para a API NestJS
 - [ ] API NestJS:
   - [ ] Armazena logs de clima em MongoDB

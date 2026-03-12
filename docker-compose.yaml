@@ -19,6 +19,24 @@ services:
     networks:
       - backend-net
 
+  collector:
+    build:
+      context: ./collector
+    container_name: collector
+    env_file:
+      - ".env"
+    restart: always
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./collector
+          target: /app
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
 volumes:
   rabbitmq_data:
 
