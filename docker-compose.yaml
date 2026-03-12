@@ -1,0 +1,29 @@
+services:
+  rabbitmq:
+    build:
+      context: ./rabbitmq
+    container_name: rabbitmq
+    restart: always
+    env_file:
+      - ".env"
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+    networks:
+      - backend-net
+
+volumes:
+  rabbitmq_data:
+
+networks:
+  backend-net:
+    driver: bridge
+  frontend-net:
+    driver: bridge
