@@ -70,7 +70,7 @@ def get_weather(appId):
 
 
 # make it send only if the last message was sent more than 1 hour ago
-def send_to_queue(function, key, channel, queue):
+def send_to_queue(function, key, channel, exchange, routing_key):
     data = function(key)
 
     if data is None:
@@ -81,8 +81,8 @@ def send_to_queue(function, key, channel, queue):
         message = json.dumps(data)
 
         channel.basic_publish(
-            exchange="",
-            routing_key=queue,
+            exchange=exchange,
+            routing_key=routing_key,
             body=message,
             properties=pika.BasicProperties(delivery_mode=pika.DeliveryMode.Persistent),
         )
@@ -131,18 +131,57 @@ def main():
     apiKey = os.getenv("WEATHER_API_KEY")
     rabbitmq_url = os.getenv("RABBITMQ_URL")
     rabbitmq_queue_name = os.getenv("RABBITMQ_QUEUE")
+    rabbitmq_retry_queue_name = f"{rabbitmq_queue_name}.retry"
+    rabbitmq_exchange_name = os.getenv("RABBITMQ_EXCHANGE") or "wheater.exchange"
+    rabbitmq_retry_exchange_name = f"{rabbitmq_exchange_name}.retry"
+    rabibitmq_routing_key = os.getenv("RABBITMQ_ROUTING_KEY")
     interval = int(os.getenv("SEND_INTERVAL") or 3600)
 
     scheduler = sched.scheduler(time.time, time.sleep)
 
     connection, channel = connect_to_rabbitmq(rabbitmq_url, interval)
-    channel.queue_declare(queue=rabbitmq_queue_name, durable=True)
+
+    channel.exchange_declare(
+        exchange=rabbitmq_exchange_name, exchange_type="direct", durable=True
+    )
+    channel.exchange_declare(
+        exchange=rabbitmq_retry_exchange_name, exchange_type="direct", durable=True
+    )
+
+    retry_args = {
+        "x-dead-letter-exchange": rabbitmq_exchange_name,
+        "x-dead-letter-routing-key": rabibitmq_routing_key,
+        "x-message-ttl": 10000,
+    }
+
+    channel.queue_declare(
+        queue=rabbitmq_retry_queue_name, durable=True, arguments=retry_args
+    )
+
+    channel.queue_bind(
+        queue=rabbitmq_retry_queue_name,
+        exchange=rabbitmq_retry_exchange_name,
+        routing_key=rabibitmq_routing_key,
+    )
+
+    main_args = {
+        "x-dead-letter-exchange": rabbitmq_retry_exchange_name,
+        "x-dead-letter-routing-key": rabibitmq_routing_key,
+    }
+
+    channel.queue_declare(queue=rabbitmq_queue_name, durable=True, arguments=main_args)
+
+    channel.queue_bind(
+        queue=rabbitmq_queue_name,
+        exchange=rabbitmq_exchange_name,
+        routing_key=rabibitmq_routing_key,
+    )
 
     repeat_after_interval(
         scheduler,
         interval,
         send_to_queue,
-        (get_weather, apiKey, channel, rabbitmq_queue_name),
+        (get_weather, apiKey, channel, rabbitmq_exchange_name, rabibitmq_routing_key),
     )
 
     try:
