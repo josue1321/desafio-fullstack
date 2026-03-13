@@ -37,6 +37,24 @@ services:
     networks:
       - backend-net
 
+  worker:
+    build:
+      context: ./worker
+    container_name: worker
+    env_file:
+      - ".env"
+    restart: always
+    develop:
+      watch:
+        - action: rebuild
+          path: ./worker
+          target: /app
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    networks:
+      - backend-net
+
 volumes:
   rabbitmq_data:
 
