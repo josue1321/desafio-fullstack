@@ -5,6 +5,8 @@ import httpx
 import pika
 import json
 import logging
+import signal
+import sys
 
 
 logging.basicConfig(
@@ -113,13 +115,19 @@ def connect_to_rabbitmq(rabbitmq_url, rabbitmq_heartbeat):
             connection = pika.BlockingConnection(parameters=parameters)
             channel = connection.channel()
 
-            return channel
+            return connection, channel
         except pika.exceptions.AMQPConnectionError as e:
             logging.error(f"Error trying to connect: {e}")
             time.sleep(0.1)
 
 
+def handle_sigterm(*args):
+    raise KeyboardInterrupt()
+
+
 def main():
+    signal.signal(signal.SIGTERM, handle_sigterm)
+
     apiKey = os.getenv("WEATHER_API_KEY")
     rabbitmq_url = os.getenv("RABBITMQ_URL")
     rabbitmq_queue_name = os.getenv("RABBITMQ_QUEUE")
@@ -127,7 +135,7 @@ def main():
 
     scheduler = sched.scheduler(time.time, time.sleep)
 
-    channel = connect_to_rabbitmq(rabbitmq_url, interval)
+    connection, channel = connect_to_rabbitmq(rabbitmq_url, interval)
     channel.queue_declare(queue=rabbitmq_queue_name, durable=True)
 
     repeat_after_interval(
@@ -136,7 +144,17 @@ def main():
         send_to_queue,
         (get_weather, apiKey, channel, rabbitmq_queue_name),
     )
-    scheduler.run()
+
+    try:
+        logging.info("Starting scheduler")
+        scheduler.run()
+    except KeyboardInterrupt:
+        logging.info("Shutting down")
+    finally:
+        if connection and connection.is_open:
+            connection.close()
+            logging.info("RabbitMQ connection gracefully closed.")
+        sys.exit(0)
 
 
 if __name__ == "__main__":
