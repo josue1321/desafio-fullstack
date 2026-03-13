@@ -272,7 +272,7 @@ A forma de aplicar IA é livre. Algumas ideias possíveis:
 
 - [x] Python coleta dados de clima (Open-Meteo ou OpenWeather)
 - [x] Python envia dados para a fila
-- [ ] Worker Go consome a fila e envia para a API NestJS
+- [x] Worker Go consome a fila e envia para a API NestJS
 - [ ] API NestJS:
   - [ ] Armazena logs de clima em MongoDB
   - [ ] Exponde endpoints para listar dados
@@ -287,8 +287,6 @@ A forma de aplicar IA é livre. Algumas ideias possíveis:
   - [ ] (Opcional) Página consumindo API pública paginada
 - [ ] Docker Compose sobe todos os serviços
 - [ ] Código em TypeScript (backend e frontend)
-- [ ] Vídeo explicativo (máx. 5 minutos)
-- [ ] Pull Request via branch com seu nome completo
 - [ ] README completo com instruções de execução
 - [ ] Logs, tratamento de erros básicos, graceful shutdown, etc em cada serviço
 
