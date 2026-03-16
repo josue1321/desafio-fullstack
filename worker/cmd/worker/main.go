@@ -72,7 +72,7 @@ func processMessage(msg amqp.Delivery, apiURL string) {
 		return
 	}
 
-	resp, err := http.Post(apiURL, "application/json", bytes.NewBuffer(weatherJSON))
+	resp, err := http.Post(apiURL+"/weather/create", "application/json", bytes.NewBuffer(weatherJSON))
 	if err != nil {
 		log.Printf("Failed to post the message to the api: %v", err)
 		printOnError(msg.Nack(false, false), "Failed to negative acknowledge the message")
@@ -84,6 +84,8 @@ func processMessage(msg amqp.Delivery, apiURL string) {
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if err := msg.Ack(false); err != nil {
 			log.Printf("Failed to acknowledge message: %v", err)
+		} else {
+			log.Print("Wheater data sended to the api")
 		}
 	} else {
 		log.Printf("API failed with status %d", resp.StatusCode)

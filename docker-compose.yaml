@@ -55,6 +55,24 @@ services:
     networks:
       - backend-net
 
+  backend-api:
+    build:
+      context: ./backend-api
+    container_name: backend-api
+    env_file:
+      - ".env"
+    ports:
+      - "3000:3000"
+    restart: always
+    develop:
+      watch:
+        - action: sync+restart
+          path: ./backend-api
+          target: /app
+    networks:
+      - backend-net
+      - frontend-net
+
 volumes:
   rabbitmq_data:
 
