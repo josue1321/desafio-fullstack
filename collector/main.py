@@ -132,7 +132,7 @@ def main():
     rabbitmq_url = os.getenv("RABBITMQ_URL")
     rabbitmq_queue_name = os.getenv("RABBITMQ_QUEUE")
     rabbitmq_retry_queue_name = f"{rabbitmq_queue_name}.retry"
-    rabbitmq_exchange_name = os.getenv("RABBITMQ_EXCHANGE") or "wheater.exchange"
+    rabbitmq_exchange_name = os.getenv("RABBITMQ_EXCHANGE") or "weather.exchange"
     rabbitmq_retry_exchange_name = f"{rabbitmq_exchange_name}.retry"
     rabibitmq_routing_key = os.getenv("RABBITMQ_ROUTING_KEY")
     interval = int(os.getenv("SEND_INTERVAL") or 3600)

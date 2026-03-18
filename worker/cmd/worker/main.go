@@ -13,23 +13,47 @@ import (
 )
 
 type WeatherData struct {
-	Timezone           string   `json:"timezone"`
-	Dt                 *int64   `json:"dt"`
-	Sunrise            *int64   `json:"sunrise"`
-	Sunset             *int64   `json:"sunset"`
-	Temp               *float64 `json:"temp"`
-	FeelsLike          *float64 `json:"feels_like"`
-	Pressure           *int     `json:"pressure"`
-	Humidity           *int     `json:"humidity"`
-	DewPoint           *float64 `json:"dew_point"`
-	Uvi                *float64 `json:"uvi"`
-	Clouds             *int     `json:"clouds"`
-	Visibility         *int     `json:"visibility"`
-	WindSpeed          *float64 `json:"wind_speed"`
-	WindDeg            *int     `json:"wind_deg"`
-	WeatherDescription string   `json:"weather_description"`
-	WeatherMain        string   `json:"weather_main"`
-	Pop                *float64 `json:"pop"`
+	Timezone           string  `json:"timezone"`
+	Dt                 int64   `json:"dt"`
+	Sunrise            int64   `json:"sunrise"`
+	Sunset             int64   `json:"sunset"`
+	Temp               float64 `json:"temp"`
+	FeelsLike          float64 `json:"feels_like"`
+	Pressure           int     `json:"pressure"`
+	Humidity           int     `json:"humidity"`
+	DewPoint           float64 `json:"dew_point"`
+	Uvi                float64 `json:"uvi"`
+	Clouds             int     `json:"clouds"`
+	Visibility         int     `json:"visibility"`
+	WindSpeed          float64 `json:"wind_speed"`
+	WindDeg            int     `json:"wind_deg"`
+	WeatherDescription string  `json:"weather_description"`
+	WeatherMain        string  `json:"weather_main"`
+	Pop                float64 `json:"pop"`
+}
+
+func (w WeatherData) MarshalJSON() ([]byte, error) {
+	type T struct {
+		Timezone           string  `json:"timezone"`
+		Dt                 int64   `json:"dt"`
+		Sunrise            int64   `json:"sunrise"`
+		Sunset             int64   `json:"sunset"`
+		Temp               float64 `json:"temp"`
+		FeelsLike          float64 `json:"feelsLike"`
+		Pressure           int     `json:"pressure"`
+		Humidity           int     `json:"humidity"`
+		DewPoint           float64 `json:"dewPoint"`
+		Uvi                float64 `json:"uvi"`
+		Clouds             int     `json:"clouds"`
+		Visibility         int     `json:"visibility"`
+		WindSpeed          float64 `json:"windSpeed"`
+		WindDeg            int     `json:"windDeg"`
+		WeatherDescription string  `json:"weatherDescription"`
+		WeatherMain        string  `json:"weatherMain"`
+		Pop                float64 `json:"pop"`
+	}
+
+	return json.Marshal(T(w))
 }
 
 func failOnError(err error, msg string) {
@@ -81,14 +105,21 @@ func processMessage(msg amqp.Delivery, apiURL string) {
 
 	defer resp.Body.Close()
 
+	// TODO: if else checking if the body is a string or a json
+
+	var body map[string]any
+
+	err = json.NewDecoder(resp.Body).Decode(&body)
+	printOnError(err, "Failed to decode the response body")
+
 	if resp.StatusCode >= 200 && resp.StatusCode < 300 {
 		if err := msg.Ack(false); err != nil {
 			log.Printf("Failed to acknowledge message: %v", err)
 		} else {
-			log.Print("Wheater data sended to the api")
+			log.Printf("%v", body)
 		}
 	} else {
-		log.Printf("API failed with status %d", resp.StatusCode)
+		log.Printf("API failed with status %d: %v", resp.StatusCode, body)
 		printOnError(msg.Nack(false, false), "Failed to negative acknowledge the message")
 	}
 }
