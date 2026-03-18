@@ -1,19 +1,25 @@
-export class CreateWeatherDto {
-  timezone: string;
-  dt?: number;
-  sunrise?: number;
-  sunset?: number;
-  temp?: number;
-  feelsLike?: number;
-  pressure?: number;
-  humidity?: number;
-  dewPoint?: number;
-  uvi?: number;
-  clouds?: number;
-  visibility?: number;
-  windSpeed?: number;
-  windDeg?: number;
-  weatherDescription: string;
-  weatherMain: string;
-  pop?: number;
-}
+import * as z from 'zod';
+
+export const createWeatherSchema = z
+  .object({
+    timezone: z.string(),
+    dt: z.number(),
+    sunrise: z.number(),
+    sunset: z.number(),
+    temp: z.number(),
+    feelsLike: z.number(),
+    pressure: z.number(),
+    humidity: z.number(),
+    dewPoint: z.number(),
+    uvi: z.number(),
+    clouds: z.number(),
+    visibility: z.number(),
+    windSpeed: z.number(),
+    windDeg: z.number(),
+    weatherDescription: z.string(),
+    weatherMain: z.string(),
+    pop: z.number(),
+  })
+  .required();
+
+export type CreateWeatherDto = z.infer<typeof createWeatherSchema>;
